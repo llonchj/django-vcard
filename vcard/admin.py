@@ -1,8 +1,11 @@
 from vcard.models import *
 from django.contrib import admin
 from django.http import HttpResponseRedirect, HttpResponse
+from django.core.urlresolvers import reverse
+
 from vcard.admin_views import *
 import vcard
+
 from django.shortcuts import render_to_response
 from django.conf.urls.defaults import *
 from django.utils.translation import ugettext as _
@@ -132,7 +135,8 @@ class ContactAdmin(admin.ModelAdmin):
     def uploadVCF(self, request):
         """ TODO: Docstring """
         if 'confirm' not in request.REQUEST:
-            return HttpResponseRedirect('/admin/vcard/contact')
+            return HttpResponseRedirect(# '{{admin_url}}/vcard/contact'
+                reverse("admin:vcard_contact_changelist")) 
 
         newContactList = request.session['unconfirmedContacts']
 
@@ -140,13 +144,15 @@ class ContactAdmin(admin.ModelAdmin):
 
             i.commit()
 
-        return HttpResponseRedirect('/admin/vcard/contact')
+        return HttpResponseRedirect(# '{{admin_url}}/vcard/contact'
+            reverse("admin:vcard_contact_changelist")) 
 
     def confirmVCF(self, request):
         newContactList = []
 
         if 'upfile' not in request.FILES:
-            return HttpResponseRedirect('/admin/vcard/contact/selectVCF/')
+            return HttpResponseRedirect(# '{{admin_url}}/vcard/contact/selectVCF/
+                reverse("admin:vcard_contact_selectVCF"))
 
         try:
             for o in vobject.readComponents(request.FILES['upfile']):
