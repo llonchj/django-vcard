@@ -42,9 +42,13 @@ class Contact(models.Model):
         the original vCard
     """
     # required
-    fn = models.CharField(max_length=1024, blank = False, null=False, verbose_name=_("formatted name"), help_text=_("The formatted name string associated with the vCard object"))
-    family_name = models.CharField(max_length = 1024, verbose_name=_("family name"))
-    given_name = models.CharField(max_length = 1024, verbose_name=_("given name"))
+    fn = models.CharField(max_length=766, blank = False, null=False, 
+        db_index=True, verbose_name=_("formatted name"), 
+        help_text=_("The formatted name string associated with the vCard object"))
+    family_name = models.CharField(max_length = 766, db_index=True, 
+        verbose_name=_("family name"))
+    given_name = models.CharField(max_length = 766, db_index=True, 
+        verbose_name=_("given name"))
     # n = models.OneToOneField('N', unique=True, blank=False, null=False, verbose_name=_("Name"), help_text=_("A structured representation of the name of the person, place or thing associated with the vCard object."))
 
     # bday can be formulated in various ways
@@ -53,10 +57,11 @@ class Contact(models.Model):
     # is perfectly fine. That is why bday
     # is stored as a CharField
 
-    additional_name = models.CharField(max_length=1024, verbose_name=_("additional name"), blank=True)
-    honorific_prefix = models.CharField(max_length=1024, verbose_name=_("honorific prefix"), blank=True)
-    honorific_suffix = models.CharField(max_length=1024, verbose_name=_("honorific suffix"), blank=True)
-    bday = models.DateField(blank=True, null=True, verbose_name=_("birthday"))
+    additional_name = models.CharField(max_length=766, db_index=True, 
+        verbose_name=_("additional name"), blank=True)
+    honorific_prefix = models.CharField(max_length=766, verbose_name=_("honorific prefix"), blank=True)
+    honorific_suffix = models.CharField(max_length=766, verbose_name=_("honorific suffix"), blank=True)
+    bday = models.DateField(blank=True, null=True, verbose_name=_("birthday"), db_index=True)
     classP = models.CharField(max_length=256, blank = True, null=True, verbose_name=_("class"))
     rev = models.DateTimeField(blank=True, null=True, verbose_name=_("last revision"))
     sort_string = models.CharField(max_length=256, blank=True, null=True, verbose_name=_("sort string"))
@@ -724,11 +729,14 @@ class Tel(models.Model):
         ('pcs',  _(u"pcs")),
     )
 
-    contact = models.ForeignKey(Contact)
+    contact = models.ForeignKey(Contact, related_name="tels")
     # making a choice field of type is incorrect as arbitrary
     # types of phone number are allowed by the vcard specs.
-    type  = models.CharField(max_length=30, verbose_name=_("type of phone number"), help_text=_("for instance WORK or HOME"), choices=TYPE_CHOICES)
-    value = models.CharField(max_length=100, verbose_name=_("value"))
+    type  = models.CharField(max_length=30, db_index=True, 
+        verbose_name=_("type of phone number"), 
+        help_text=_("for instance WORK or HOME"), choices=TYPE_CHOICES)
+    value = models.CharField(max_length=100, db_index=True, 
+        verbose_name=_("value"))
 
     class Meta:
         verbose_name = _("telephone number")
@@ -745,9 +753,11 @@ class Email(models.Model):
         ('pref', _(u"pref")),
     )
 
-    contact = models.ForeignKey(Contact)
-    type  = models.CharField(max_length=30, verbose_name=_("type of email"), choices=TYPE_CHOICES)
-    value = models.EmailField(max_length=100, verbose_name=_("value"))
+    contact = models.ForeignKey(Contact, related_name="emails")
+    type  = models.CharField(max_length=30, db_index=True, 
+        verbose_name=_("type of email"), choices=TYPE_CHOICES)
+    value = models.EmailField(max_length=100, db_index=True, 
+        verbose_name=_("value"))
 
     class Meta:
         verbose_name = _("email")
@@ -759,10 +769,11 @@ class Geo(models.Model):
     A geographical location associated with the contact
     in geo uri format
     """
-    contact = models.ForeignKey(Contact)
+    contact = models.ForeignKey(Contact, related_name="geos")
     # because vobject can't properly pass the geo uri for now the
     # field is specified as a normal CharField
-    data = models.CharField(max_length=1024, verbose_name=_("geographic uri"))
+    data = models.CharField(max_length=766, db_index=True,
+        verbose_name=_("geographic uri"))
 
     class Meta:
         verbose_name = _("geographic uri")
@@ -773,9 +784,11 @@ class Org(models.Model):
     """
     An organization and unit the contact is affiliated with.
     """
-    contact = models.ForeignKey(Contact)
-    organization_name = models.CharField(max_length=1024, verbose_name=_("organization name"))
-    organization_unit = models.CharField(max_length=1024, verbose_name=_("organization unit"), blank=True)
+    contact = models.ForeignKey(Contact, related_name="orgs")
+    organization_name = models.CharField(max_length=766, db_index=True,
+        verbose_name=_("organization name"))
+    organization_unit = models.CharField(max_length=766, db_index=True,
+        verbose_name=_("organization unit"), blank=True)
 
     class Meta:
         verbose_name = _("organization")
@@ -796,15 +809,23 @@ class Adr(models.Model):
         ('pref',  _(u"pref")),
     )
 
-    contact = models.ForeignKey(Contact)
-    post_office_box = models.CharField(max_length=1024, verbose_name=_("post office box"), blank=True)
-    extended_address = models.CharField(max_length=1024, verbose_name=_("extended address"), blank=True)
-    street_address = models.CharField(max_length=1024, verbose_name=_("street address"))
-    locality = models.CharField(max_length=1024, verbose_name=_("locality"))
-    region  = models.CharField(max_length=1024, verbose_name=_("region"))
-    postal_code = models.CharField(max_length=1024, verbose_name=_("postal code"))
-    country_name = models.CharField(max_length=1024, verbose_name=_("country name"))
-    type = models.CharField(max_length=1024, verbose_name=_("type"), choices=TYPE_CHOICES)
+    contact = models.ForeignKey(Contact, related_name="addrs")
+    post_office_box = models.CharField(max_length=766, db_index=True,
+        verbose_name=_("post office box"), blank=True)
+    extended_address = models.CharField(max_length=766, db_index=True,
+        verbose_name=_("extended address"), blank=True)
+    street_address = models.CharField(max_length=766, db_index=True,
+        verbose_name=_("street address"))
+    locality = models.CharField(max_length=766, db_index=True,
+        verbose_name=_("locality"))
+    region  = models.CharField(max_length=766, db_index=True,
+        verbose_name=_("region"))
+    postal_code = models.CharField(max_length=766, db_index=True,
+        verbose_name=_("postal code"))
+    country_name = models.CharField(max_length=766, db_index=True,
+        verbose_name=_("country name"))
+    type = models.CharField(max_length=766, db_index=True,
+        verbose_name=_("type"), choices=TYPE_CHOICES)
     # value = models.CharField(max_lengt =1024, verbose_name=_("Value"))
 
     class Meta:
@@ -816,8 +837,8 @@ class Agent(models.Model):
     """
     An agent of the contact
     """
-    contact = models.ForeignKey(Contact)
-    data = models.CharField(max_length=100)
+    contact = models.ForeignKey(Contact, related_name="agents")
+    data = models.CharField(max_length=100, db_index=True)
 
     class Meta:
         verbose_name = _("agent")
@@ -829,8 +850,8 @@ class Category(models.Model):
     Specifies application category information about the
     contact.  Also known as "tags".
     """
-    contact = models.ForeignKey(Contact)
-    data = models.CharField(max_length=100)
+    contact = models.ForeignKey(Contact, related_name="categories")
+    data = models.CharField(max_length=100, db_index=True)
 
     class Meta:
         verbose_name = _("category")
@@ -842,8 +863,8 @@ class Key(models.Model):
     Specifies a public key or authentication certificate
     associated with the contact information
     """
-    contact = models.ForeignKey(Contact)
-    data = models.CharField(max_length=100)
+    contact = models.ForeignKey(Contact, related_name="keys")
+    data = models.CharField(max_length=100, db_index=True)
 
     class Meta:
         verbose_name = _("key")
@@ -855,8 +876,8 @@ class Label(models.Model):
     Formatted text corresponding to a delivery
     address of the object the vCard represents
     """
-    contact = models.ForeignKey(Contact)
-    data = models.CharField(max_length=2000)
+    contact = models.ForeignKey(Contact, related_name="labels")
+    data = models.CharField(max_length=766, db_index=True)
 
     class Meta:
         verbose_name = _("label")
@@ -888,8 +909,8 @@ class Mailer(models.Model):
     """
     No longer supported in draft vcard specificiation of July 12 2010
     """
-    contact = models.ForeignKey(Contact)
-    data = models.CharField(max_length=2000)
+    contact = models.ForeignKey(Contact, related_name="mailers")
+    data = models.CharField(max_length=766, db_index=True)
 
     class Meta:
         verbose_name = _("mailer")
@@ -901,8 +922,8 @@ class Nickname(models.Model):
     The nickname of the
     object the vCard represents.
     """
-    contact = models.ForeignKey(Contact)
-    data = models.CharField(max_length=100)
+    contact = models.ForeignKey(Contact, related_name="nicknames")
+    data = models.CharField(max_length=100, db_index=True)
 
     class Meta:
         verbose_name = _("nickname")
@@ -914,7 +935,7 @@ class Note(models.Model):
     Supplemental information or a comment that is
     associated with the vCard.
     """
-    contact = models.ForeignKey(Contact)
+    contact = models.ForeignKey(Contact, related_name="notes")
     data = models.TextField()
 
     class Meta:
@@ -949,8 +970,8 @@ class Role(models.Model):
     The function or part played in a particular
     situation by the object the vCard represents.
     """
-    contact = models.ForeignKey(Contact)
-    data = models.CharField(max_length=100)
+    contact = models.ForeignKey(Contact, related_name="roles")
+    data = models.CharField(max_length=100, db_index=True)
 
     class Meta:
         verbose_name = _("role")
@@ -981,8 +1002,8 @@ class Title(models.Model):
     """
     The position or job of the contact
     """
-    contact = models.ForeignKey(Contact)
-    data = models.CharField(max_length=100)
+    contact = models.ForeignKey(Contact, related_name="titles")
+    data = models.CharField(max_length=100, db_index=True)
 
     class Meta:
         verbose_name = _("title")
@@ -996,8 +1017,8 @@ class Tz(models.Model):
     Tz is represented as a CharField and not in a formal structure because
     the vcard specification allows city names as tz parameters
     """
-    contact = models.ForeignKey(Contact)
-    data = models.CharField(max_length=100)
+    contact = models.ForeignKey(Contact, related_name="timezones")
+    data = models.CharField(max_length=100, db_index=True)
 
     class Meta:
         verbose_name = _("time zone")
@@ -1008,8 +1029,8 @@ class Url(models.Model):
     """
     A Url associted with a contact.
     """
-    contact = models.ForeignKey(Contact)
-    data = models.URLField(verify_exists=False)
+    contact = models.ForeignKey(Contact, related_name="utls")
+    data = models.URLField(verify_exists=False, db_index=True)
 
     class Meta:
         verbose_name = _("url")
